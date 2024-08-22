@@ -31,7 +31,7 @@ jobs:
 
       - name: Deploy All ScaleSet Helm Charts
         env:
-          GITHUB_PAT: ${{secrets.GITHUB_PAT_TOKEN}}
+          GITHUB_PAT: ${{secrets.PAT_TOKEN}}
         run: |
           for file in ./scaleset-deployments/*.yaml; do
             envsubst < "$file" > "./temp.yaml"
