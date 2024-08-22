@@ -1,0 +1,41 @@
+name: Deploy Actions Runner Controller to EKS Cluster
+
+on:
+
+  # push:
+    # paths:
+      # - 'arc-controller/*'
+      # - 'arc-scalesets/*'
+      # - '.github/workflows/deploy-all-runners.yaml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: DEVOPS
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir ${HOME}/.kube
+          echo ${{ secrets.KUBE_CONFIG_CLUSTER }} | base64 --decode > ${HOME}/.kube/config
+          chmod 600 ${HOME}/.kube/config
+          cat ${HOME}/.kube/config
+
+      - name: Deploy ARC Helm chart
+        run: |
+          helm upgrade --install arc --namespace runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller --values ./selfhosted-runners-arc/arc-values.yaml
+
+      - name: Deploy All ScaleSet Helm Charts
+        env:
+          GITHUB_PAT: ${{secrets.GITHUB_PAT_TOKEN}}
+        run: |
+          for file in ./scaleset-deployments/*.yaml; do
+            envsubst < "$file" > "./temp.yaml"
+            release_name=$(basename "$file" .yaml)
+            helm upgrade --install "${release_name}-runner" --namespace runners oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set --values ./temp.yaml
+          done
+          

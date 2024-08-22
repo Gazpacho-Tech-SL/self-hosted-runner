@@ -1,0 +1,32 @@
+name: Uninstall Actions Runner Controller on EKS Cluster
+
+on:
+  workflow_dispatch:
+
+jobs:
+  uninstall-arc:
+    name: Uninstall Helm Chart Runners
+    runs-on: ubuntu-latest
+    environment: DEVOPS
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir ${HOME}/.kube
+          echo ${{ secrets.KUBE_CONFIG_CLUSTER }} | base64 --decode > ${HOME}/.kube/config
+          chmod 600 ${HOME}/.kube/config
+          cat ${HOME}/.kube/config
+
+      - name: Uninstall Helm Chart Runners
+        run: |
+
+          # Uninstall all Helm chart runners
+          for file in ./arc-scalesets/*.yaml; do
+            # Extract the base name of the file, removing the path and .yaml extension
+            release_name=$(basename "$file" .yaml)
+            # Uninstall the Helm release using the modified release name
+            helm uninstall "${release_name}-runner" --namespace runners
+          done
