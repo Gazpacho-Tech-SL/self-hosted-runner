@@ -1,0 +1,78 @@
+name: Publish Custom GitHub Actions Runner Image to AWS ECR
+
+on:
+  push:
+    paths:
+      - '.github/workflows/ecr-build-and-push.yaml'
+      - 'custom-github-actions-runner/*'
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REPO_NAME: custom-runner-image
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  docker_build:
+    name: Build and Push Custom GitHub Action Runners Image to AWS ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Get Commit Hash
+        id: get_commit_hash
+        run: echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Get Version
+        id: get_version
+        run: echo "version=2.319.1" >> $GITHUB_ENV  # TODO: Modify to dynamically fetch version 
+
+      - name: Get Build Number
+        id: get_build_number
+        run: echo "build_number=${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Debug - Print Variables
+        run: |
+          echo "Version: ${{ env.version }}"
+          echo "Build Number: ${{ env.build_number }}"
+          echo "Commit Hash: ${{ env.commit_hash }}"
+
+      - name: Authenticate Docker to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Check if ECR Repository Exists
+        id: check_ecr_repo
+        run: |
+          if aws ecr describe-repositories --repository-names ${{ env.ECR_REPO_NAME }} --region ${{ env.AWS_REGION }}; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Cancel Job if Repository Does Not Exist
+        if: steps.check_ecr_repo.outputs.exists == 'false'
+        run: |
+          echo "ECR repository does not exist. Cancelling the job."
+          exit 1
+
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ env.ECR_REPO_NAME }}:${{ env.version }} -f custom-github-actions-runner/Dockerfile .
+
+      - name: Tag Docker Image for ECR
+        run: |
+          IMAGE_TAG="${{ env.version }}-${{ env.commit_hash }}-${{ env.build_number }}"
+          docker tag ${{ env.ECR_REPO_NAME }}:${{ env.version }} ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_NAME }}:$IMAGE_TAG
+
+      - name: Push Docker Image to ECR
+        run: |
+          IMAGE_TAG="${{ env.version }}-${{ env.commit_hash }}-${{ env.build_number }}"
+          docker push ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO_NAME }}:$IMAGE_TAG
