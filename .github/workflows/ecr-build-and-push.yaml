@@ -1,4 +1,4 @@
-qaname: Publish Custom GitHub Actions Runner Image to AWS ECR
+name: Publish Custom GitHub Actions Runner Image to AWS ECR
 
 on:
   push:
