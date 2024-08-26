@@ -1,4 +1,4 @@
-name: Publish Custom GitHub Actions Runner Image to AWS ECR
+qaname: Publish Custom GitHub Actions Runner Image to AWS ECR
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
+  AWS_REGION: "us-west-2"
   ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   ECR_REPO_NAME: custom-runner-image
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
