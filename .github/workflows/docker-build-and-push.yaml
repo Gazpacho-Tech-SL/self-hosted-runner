@@ -45,8 +45,9 @@ jobs:
           file: custom-github-actions-runner/Dockerfile
           push: true 
           tags: |
-            raphaeleze/custom-github-actions-runner:${{ env.build_number }}
-            raphaeleze/custom-github-actions-runner:${{ env.build_number }}-${{ env.commit_hash }}
+            raphaeleze/recipex:${{ env.version }}
+            raphaeleze/recipex:${{ env.version }}-${{ env.commit_hash }}
+            raphaeleze/recipex:${{ env.version }}-${{ env.commit_hash }}-${{ env.build_number }}
             
       # Note: Ideally, we would push the Docker image to Amazon ECR (Elastic Container Registry).
       #
