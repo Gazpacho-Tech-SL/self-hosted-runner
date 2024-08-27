@@ -18,6 +18,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Get Version
+        id: get_version
+        run: echo "version=2.319.1" >> $GITHUB_ENV  # TODO: Modify to dynamically fetch version 
+
       - name: Get Commit Hash
         id: get_commit_hash
         run: echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
