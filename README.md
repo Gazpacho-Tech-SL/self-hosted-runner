@@ -1,6 +1,9 @@
 # ARC Self-Hosted Runners
 
-This repository contains configurations for deploying self-hosted runners in Kubernetes environments.
+This repository contains configurations for deploying self-hosted runners in Kubernetes environments. 
+
+For more information : https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/quickstart-for-actions-runner-controller
+Using github app for authentication: https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/authenticating-to-the-github-api
 
 ## Custom Runner Image
 
