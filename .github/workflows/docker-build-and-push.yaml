@@ -18,6 +18,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Get Version
+        id: get_version
+        run: echo "version=2.319.1" >> $GITHUB_ENV  # TODO: Modify to dynamically fetch version 
+
       - name: Get Commit Hash
         id: get_commit_hash
         run: echo "commit_hash=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
@@ -45,8 +49,9 @@ jobs:
           file: custom-github-actions-runner/Dockerfile
           push: true 
           tags: |
-            raphaeleze/custom-github-actions-runner:${{ env.build_number }}
-            raphaeleze/custom-github-actions-runner:${{ env.build_number }}-${{ env.commit_hash }}
+            raphaeleze/custom-github-actions-runner:${{ env.version }}
+            raphaeleze/custom-github-actions-runner:${{ env.version }}-${{ env.commit_hash }}
+            raphaeleze/custom-github-actions-runner:${{ env.version }}-${{ env.commit_hash }}-${{ env.build_number }}
             
       # Note: Ideally, we would push the Docker image to Amazon ECR (Elastic Container Registry).
       #

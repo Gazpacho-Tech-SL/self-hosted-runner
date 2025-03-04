@@ -30,3 +30,7 @@ jobs:
             # Uninstall the Helm release using the modified release name
             helm uninstall "${release_name}-runner" --namespace runners
           done
+
+      - name: Uninstall ARC 
+        run: |
+          helm uninstall arc --namespace runners
