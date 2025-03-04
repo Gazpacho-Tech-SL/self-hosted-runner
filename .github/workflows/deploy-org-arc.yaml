@@ -1,0 +1,46 @@
+name: Deploy ORG Actions Runner Controller to EKS Cluster
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p ${HOME}/.kube
+          echo "${{ secrets.KUBE_CONFIG_CLUSTER }}" | base64 --decode > ${HOME}/.kube/config
+          chmod 600 ${HOME}/.kube/config
+
+      - name: Verify Kubernetes Connection
+        run: kubectl get nodes
+
+      - name: Create Kubernetes namespaces
+        run: |
+          kubectl create namespace arc-systems || echo "Namespace arc-systems already exists"
+          kubectl create namespace arc-runners || echo "Namespace arc-runners already exists"
+
+      - name: Create Kubernetes Secret
+        run: |
+          kubectl create secret generic pre-defined-secret \
+            --namespace=arc-runners \
+            --from-literal=github_app_id=${{ secrets.GITHUB_APP_ID }} \
+            --from-literal=github_app_installation_id=${{ secrets.GITHUB_APP_INSTALLATION_ID }} \
+            --from-literal=github_app_private_key="${{ secrets.GITHUB_APP_PRIVATE_KEY }}" || echo "Secret already exists"
+
+      - name: Deploy Helm Chart for ARC Systems
+        run: |
+          helm upgrade --install arc oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller \
+          --namespace arc-systems
+
+      - name: Deploy Helm Chart for ARC Runners
+        run: |
+          helm upgrade --install arc-runner-set oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set \
+          --namespace arc-runners \
+          --set githubConfigUrl="https://github.com/Gazpacho-Tech-SL" \
+          --set githubConfigSecret="pre-defined-secret" \
+          -f org-runner/values.yaml
