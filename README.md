@@ -18,10 +18,60 @@ This workflow automates the deployment of an Actions Runner Controller to a DevO
 ### Prerequisites
 
 Ensure the following GitHub secrets are configured:
-- `KUBE_CONFIG_CLUSTER`
-- `GITHUB_PAT_TOKEN`
+- `KUBE_CONFIG_CLUSTER`: This secret should contain the base64-encoded kubeconfig file for the DevOps EKS Cluster.
+- `GITHUB_PAT_TOKEN`: This secret should hold your GitHub Personal Access Token (PAT), used for authenticating with GitHub during scaleset deployments
+
+Here's an updated and more informative version of your README section, now including support for deploying **organization-level runners**, with guidance on using the provided script and recommended GitHub Actions workflow:
+
+---
+
+## Organization-Level Self-Hosted Runners Deployment
+
+In addition to deploying repository-level runners, this repository also supports deploying **organization-level self-hosted runners** using the Actions Runner Controller (ARC).
+
+> **Organization runners** are available to all repositories within your GitHub organization and can help reduce duplication and simplify runner management.
+
+Deployment Options
+
+You can deploy organization runners using either:
+
+* A **bash script**: [`bash/arc-install-org.sh`](https://github.com/Gazpacho-Tech-SL/self-hosted-runner/blob/main/bash/arc-install-org.sh)
+* A **GitHub Actions workflow** (recommended): [`.github/workflows/deploy-org-arc.yaml`](https://github.com/Gazpacho-Tech-SL/self-hosted-runner/blob/main/.github/workflows/deploy-all-runners.yaml)
+
+Both methods use Helm to deploy the ARC Scaleset with organization-level configuration.
+
+
+📂 Bash Script Deployment
+
+A bash script is available that you can adapt to deploy organization-level runners manually. This is useful for testing or for CI/CD pipelines outside of GitHub Actions.
+
+
+✅ GitHub Actions Workflow Deployment (Recommended)
+
+A preconfigured GitHub Actions workflow automates the deployment of an **organization-level runner** scaleset into your Kubernetes cluster.
+
+**Workflow Highlights:**
+
+* Automatically authenticates using a GitHub App (recommended over PAT for org-wide scopes).
+* Uses the same Helm chart (`gha-runner-scale-set`) but with organization-scoped values.
+* Can be triggered manually or on changes to the runner configuration files.
+
+**Secrets Required in GitHub:**
+
+* `KUBE_CONFIG_CLUSTER`: Base64-encoded kubeconfig for your cluster.
+* `GITHUB_APP_ID`: GitHub App ID for ARC authentication.
+* `GITHUB_APP_INSTALLATION_ID`: Installation ID for the GitHub App.
+* `GITHUB_APP_PRIVATE_KEY`: Private key associated with your GitHub App.
+
+
+> [!IMPORTANT] 
+> Ensure the file `./org-runner/values.yaml` exists and is properly configured for your organization runner.
+
 
 ## Workflow Steps:
+> [!NOTE]
+> This step is for deploying scalests without github app and selecting specific repos 
+---
 
 1. **Checkout Code**: Retrieves your repository's contents to make them available for the workflow.
 
@@ -30,12 +80,6 @@ Ensure the following GitHub secrets are configured:
 3. **Deploy ARC Helm Chart**: Installs the Actions Runner Controller Helm chart in the `kube-system` namespace of the Kubernetes cluster. The chart can be found at `oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set-controller`, and the configuration values are defined in [`./arc-controller/arc-controller-values.yaml`](./arc-controller/arc-controller-values.yaml).
 
 4. **Deploy All ScaleSet Helm Charts**: Deploys Helm charts for all scalesets. This step iterates over YAML files located in [`./arc-scalesets/`](./arc-scalesets/), applies environment variables, and deploys each chart to the `runners` namespace. The chart is located at `oci://ghcr.io/actions/actions-runner-controller-charts/gha-runner-scale-set`.
-
-## Configuration:
-
-- **KUBE_CONFIG_CLUSTER**: This secret should contain the base64-encoded kubeconfig file for the DevOps EKS Cluster.
-
-- **GITHUB_PAT_TOKEN**: This secret should hold your GitHub Personal Access Token (PAT), used for authenticating with GitHub during scaleset deployments.
 
 ## Modifying the Workflow:
 
