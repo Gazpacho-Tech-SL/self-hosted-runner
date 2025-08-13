@@ -5,7 +5,7 @@ on:
   # push:
     # paths:
       # - 'arc-controller/*'
-      # - 'arc-scalesets/*'
+      # - 'scaleset-deployments/*'
       # - '.github/workflows/deploy-all-runners.yaml'
   workflow_dispatch:
 
